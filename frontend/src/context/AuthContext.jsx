@@ -6,7 +6,16 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, _setError] = useState(null);
+
+  // Safety wrapper: error state must ALWAYS be a string or null, never an object/array
+  const setError = useCallback((val) => {
+    if (typeof val === 'string' || val === null) {
+      _setError(val);
+    } else {
+      _setError('An unexpected error occurred.');
+    }
+  }, []);
 
   // Restore session on mount
   useEffect(() => {
@@ -36,8 +45,17 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       return data;
     } catch (err) {
-      const message =
-        err.response?.data?.detail || 'Login failed. Please try again.';
+      const raw = err?.response?.data?.detail;
+      let message = 'Login failed. Please try again.';
+      if (typeof raw === 'string') {
+        message = raw;
+      } else if (raw && typeof raw.msg === 'string') {
+        message = raw.msg;
+      } else if (Array.isArray(raw) && raw[0]?.msg) {
+        message = raw[0].msg;
+      } else if (err?.message) {
+        message = err.message;
+      }
       setError(message);
       throw new Error(message);
     } finally {
@@ -55,8 +73,17 @@ export function AuthProvider({ children }) {
       setUser(data.user);
       return data;
     } catch (err) {
-      const message =
-        err.response?.data?.detail || 'Registration failed. Please try again.';
+      const raw = err?.response?.data?.detail;
+      let message = 'Registration failed. Please try again.';
+      if (typeof raw === 'string') {
+        message = raw;
+      } else if (raw && typeof raw.msg === 'string') {
+        message = raw.msg;
+      } else if (Array.isArray(raw) && raw[0]?.msg) {
+        message = raw[0].msg;
+      } else if (err?.message) {
+        message = err.message;
+      }
       setError(message);
       throw new Error(message);
     } finally {

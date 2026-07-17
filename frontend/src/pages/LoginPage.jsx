@@ -30,7 +30,7 @@ export default function LoginPage() {
     }
   };
 
-  const displayError = localError || error;
+  const displayError = typeof (localError || error) === 'string' ? (localError || error) : null;
 
   return (
     <div className="min-h-screen bg-navy-950 flex items-center justify-center px-4 relative overflow-hidden">
