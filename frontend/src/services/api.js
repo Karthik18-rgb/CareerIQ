@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Demo mode: when VITE_API_URL is not set, all API calls use mock data
+// so the demo works without a deployed backend.
+const IS_DEMO = !import.meta.env.VITE_API_URL;
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
@@ -88,37 +91,91 @@ api.interceptors.response.use(
   }
 );
 
+// ─── Demo mock data ──────────────────────────────────────────────
+
+const DEMO_USER = {
+  id: 'demo-user-001',
+  email: 'demo@careeriq.com',
+  username: 'demouser',
+  full_name: 'Demo User',
+  is_active: true,
+  is_verified: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+function demoRegister(payload) {
+  return Promise.resolve({
+    data: {
+      message: 'User registered successfully',
+      user: { ...DEMO_USER, email: payload.email, username: payload.username, full_name: payload.full_name },
+      tokens: { access_token: 'demo-access-token', refresh_token: 'demo-refresh-token', token_type: 'bearer' },
+    },
+  });
+}
+
+function demoLogin() {
+  return Promise.resolve({
+    data: {
+      message: 'Login successful',
+      user: DEMO_USER,
+      tokens: { access_token: 'demo-access-token', refresh_token: 'demo-refresh-token', token_type: 'bearer' },
+    },
+  });
+}
+
+function demoGetMe() {
+  return Promise.resolve({ data: DEMO_USER });
+}
+
+function demoAnalysisResult() {
+  return {
+    id: 'demo-1',
+    ats_score: 78.5,
+    ats_breakdown: {
+      keyword_match: 72, skills_alignment: 80, experience_relevance: 75, format_quality: 85,
+      strengths: ['Strong technical background', 'Clear career progression'],
+      weaknesses: ['Missing some keywords', 'Format could be improved'],
+      keyword_suggestions: ['Kubernetes', 'AWS', 'Microservices'],
+    },
+    missing_skills: ['Kubernetes', 'AWS Lambda', 'Microservices Architecture'],
+    resume_suggestions: ['Add quantifiable achievements', 'Include a summary section', 'Use more action verbs'],
+    cover_letter: 'Dear Hiring Manager,\n\nI am writing to express my strong interest in the position...\n\nBest regards,\nDemo User',
+    interview_questions: ['Tell me about yourself', 'Why do you want this role?', 'Describe a challenging project'],
+    hr_questions: ['What are your salary expectations?', 'Why are you leaving your current role?'],
+    technical_questions: ['Explain REST APIs', 'How would you design a scalable system?'],
+    career_suggestions: ['Consider cloud certifications', 'Build a portfolio project'],
+    learning_roadmap: ['Learn Docker & Kubernetes', 'Study system design', 'Practice coding interviews'],
+    skill_gap_analysis: 'Your resume shows strong fundamentals but lacks cloud-native technologies.',
+    resume_filename: 'resume.pdf',
+    job_title: 'Senior Software Engineer',
+    company: 'Tech Corp',
+    job_description: 'Looking for a senior engineer...',
+    created_at: new Date().toISOString(),
+  };
+}
+
+function demoAnalysisList() {
+  return [demoAnalysisResult()];
+}
+
 // ─── Auth API calls ───────────────────────────────────────────────
 
 export const authApi = {
-  register: (payload) => api.post('/auth/register', payload),
-  login: (payload) => api.post('/auth/login', payload),
-  refresh: (refreshToken) => api.post('/auth/refresh', { refresh_token: refreshToken }),
-  getMe: () => api.get('/auth/me'),
-  updateProfile: (payload) => api.put('/auth/profile', payload),
+  register: (payload) => IS_DEMO ? demoRegister(payload) : api.post('/auth/register', payload),
+  login: (payload) => IS_DEMO ? demoLogin(payload) : api.post('/auth/login', payload),
+  refresh: (refreshToken) => IS_DEMO ? Promise.reject(new Error('No refresh in demo')) : api.post('/auth/refresh', { refresh_token: refreshToken }),
+  getMe: () => IS_DEMO ? demoGetMe() : api.get('/auth/me'),
+  updateProfile: (payload) => IS_DEMO ? Promise.resolve({ data: { ...DEMO_USER, ...payload } }) : api.put('/auth/profile', payload),
 };
 
 // ─── Analysis API calls ───────────────────────────────────────────
 
 export const analysisApi = {
-  /**
-   * Upload resume + job description for AI analysis.
-   * Uses FormData — do NOT set Content-Type (axios sets it automatically with boundary).
-   */
-  upload: (formData) =>
-    api.post('/analysis/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-
-  /** Get paginated analysis history. */
-  history: (skip = 0, limit = 20) =>
-    api.get('/analysis/history', { params: { skip, limit } }),
-
-  /** Get a single analysis by ID. */
-  getById: (id) => api.get(`/analysis/${id}`),
-
-  /** Delete an analysis by ID. */
-  delete: (id) => api.delete(`/analysis/${id}`),
+  upload: (formData) => IS_DEMO ? Promise.resolve({ data: demoAnalysisResult() }) : api.post('/analysis/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  history: (skip = 0, limit = 20) => IS_DEMO ? Promise.resolve({ data: { analyses: demoAnalysisList(), total: 1 } }) : api.get('/analysis/history', { params: { skip, limit } }),
+  getById: (id) => IS_DEMO ? Promise.resolve({ data: { id, ...demoAnalysisResult() } }) : api.get(`/analysis/${id}`),
+  delete: (id) => IS_DEMO ? Promise.resolve() : api.delete(`/analysis/${id}`),
 };
 
 export default api;
