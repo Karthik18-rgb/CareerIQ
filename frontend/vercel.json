@@ -1,6 +1,7 @@
 {
   "name": "careeriq-frontend",
   "framework": "vite",
+  "rootDirectory": "frontend",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
