@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     PORT: int = 8000
 
-    # Database — MySQL
-    DATABASE_URL: str = "mysql+pymysql://root:root@localhost:3306/careeriq"
+    # Database — SQLite for demo/hackathon (override with MySQL DATABASE_URL in production)
+    DATABASE_URL: str = "sqlite:///./careeriq.db"
     DATABASE_ECHO: bool = False
 
     # JWT
@@ -40,8 +40,8 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 10
     UPLOAD_DIR: str = "uploads"
 
-    # CORS
-    CORS_ORIGINS: str = '["http://localhost:5173","http://localhost:3000"]'
+    # CORS — allow local dev + production Vercel frontend
+    CORS_ORIGINS: str = '["http://localhost:5173","http://localhost:3000","https://career-iq-muxu-ten.vercel.app"]'
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]

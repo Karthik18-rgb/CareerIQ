@@ -15,7 +15,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: CORS_ORIGINS
-        value: '["https://careeriq.vercel.app"]'
+        value: '["https://career-iq-muxu-ten.vercel.app"]'
       - key: APP_NAME
         value: CareerIQ
       - key: APP_VERSION

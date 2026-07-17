@@ -10,6 +10,7 @@ from app.config.settings import settings
 engine = create_engine(
     settings.DATABASE_URL,
     echo=settings.DATABASE_ECHO,
+    connect_args={"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {},
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
